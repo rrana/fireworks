@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '/../lib'))
+require 'fireworks'
+
+require 'optparse'
+
+options = {}
+optparse = OptionParser.new do |opts|
+  opts.banner = 'Usage: ebs-firweorks.rb [options]'
+
+  opts.on('-d', '--device DEVICE', 'Device to prewarm') do |device|
+    options[:device] = device
+  end
+
+  opts.on('-t', '--threads THREADS', Integer, 'Number of threads to run') do |threads|
+    options[:threads] = threads
+  end
+
+  opts.on('-i', '--interval INTERVAL', Integer, 'Interval, in seconds, for updates') do |interval|
+    options[:interval] = interval
+  end
+end
+
+begin
+  optparse.parse!
+  mandatory = [:device]
+  missing = mandatory.select { |param| options[param].nil? }
+  unless missing.empty?
+    puts "Missing options: #{missing.join(', ')}"
+    puts optparse
+    exit
+  end
+rescue OptionParser::InvalidOption, OptionParser::MissingArgument => e
+  puts e
+  puts optparse
+  exit
+end
+
+Fireworks::BlockDevice.new(options).prewarm
